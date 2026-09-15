@@ -12,12 +12,31 @@
     "start": "strapi start",
     "strapi": "strapi",
     "upgrade": "npx @strapi/upgrade latest",
-    "upgrade:dry": "npx @strapi/upgrade latest --dry"
+    "upgrade:dry": "npx @strapi/upgrade latest --dry",
+    "db:up": "docker compose -f ../compose.yaml up -d --wait",
+    "db:down": "docker compose -f ../compose.yaml down",
+    "db:status": "docker compose -f ../compose.yaml ps postgres && docker compose -f ../compose.yaml exec -T postgres pg_isready -U strapi -d strapi",
+    "db:logs": "docker compose -f ../compose.yaml logs -f postgres",
+    "db:psql": "docker compose -f ../compose.yaml exec postgres psql -U strapi -d strapi",
+    "dev:start": "npm run db:up && npm run develop",
+    "backup": "mkdir -p backups && npx strapi export --no-encrypt --file backups/local-$(date +%Y%m%d-%H%M%S)",
+    "predeploy": "bash scripts/predeploy-check.sh",
+    "sync:pull": "bash scripts/sync-content.sh pull",
+    "sync:push": "bash scripts/sync-content.sh push",
+    "prod:deploy": "npm run predeploy && git push heroku master",
+    "prod:logs": "heroku logs --tail --app $npm_package_config_heroku_app",
+    "prod:ps": "heroku ps --app $npm_package_config_heroku_app",
+    "prod:config": "heroku config --app $npm_package_config_heroku_app",
+    "prod:pg": "heroku pg:info --app $npm_package_config_heroku_app",
+    "prod:console": "heroku run npm run console --app $npm_package_config_heroku_app",
+    "prod:open": "heroku open --app $npm_package_config_heroku_app",
+    "prod:health": "curl -fsS -o /dev/null -w 'HTTP %{http_code} en %{time_total}s\\n' \"$(heroku apps:info --app $npm_package_config_heroku_app --json | node -pe 'JSON.parse(require(\"fs\").readFileSync(0,\"utf8\")).app.web_url')_health\""
   },
   "dependencies": {
     "@strapi/database": "5.53.0",
     "@strapi/plugin-cloud": "5.53.0",
     "@strapi/plugin-users-permissions": "5.53.0",
+    "@strapi/provider-upload-cloudinary": "^5.53.0",
     "@strapi/strapi": "5.53.0",
     "pg": "^8.20.0",
     "react": "^18.0.0",
@@ -32,11 +51,14 @@
     "typescript": "^5"
   },
   "engines": {
-    "node": ">=20.0.0 <=26.x.x",
-    "npm": ">=6.0.0"
+    "node": "24.x",
+    "npm": ">=10.0.0"
   },
   "strapi": {
     "uuid": "cfda38ca-89b9-479e-99df-1276ba372d14",
     "installId": "345592a6ad8a671da8e2d8cc52ae73e919e64a8ee65d2596d2c18966cb1ae824"
+  },
+  "config": {
+    "heroku_app": "mon-strapi-cms"
   }
 }
