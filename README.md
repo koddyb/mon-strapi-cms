@@ -113,33 +113,53 @@ Tous les scripts s'exécutent depuis le dossier `cms-headless/` :
 
 ---
 
-## 🔄 Workflow de Déploiement en Équipe
+## 🔄 Workflow Collaboratif : Pull Requests & Déploiement Automatique
 
-Pour ajouter un nouveau modèle de données ou une fonctionnalité :
+Nous utilisons un workflow professionnel basé sur les **branches de fonctionnalités** et les **Pull Requests (PR)** :
 
 ```mermaid
 graph TD
-    A[1. npm run dev:start] --> B[2. Créer/Modifier le modèle dans l'admin locale]
-    B --> C[3. Tester et valider en local]
-    C --> D[4. git add et git commit des schémas générés]
-    D --> E[5. git push origin master]
-    E --> F[6. npm run prod:deploy]
-    F --> G[7. npm run prod:health]
+    A[1. Créer une branche feature/...] --> B[2. Développer & tester en local]
+    B --> C[3. git push origin feature/...]
+    C --> D[4. Ouvrir une Pull Request sur GitHub]
+    D --> E[5. Revue & Validation de la PR par le Lead]
+    E --> F[6. Merge sur master]
+    F --> G[🚀 Déploiement automatique sur Heroku en production]
 ```
 
-1. **Création locale** : Modifiez le schéma dans `http://localhost:1337/admin`.
-2. **Commit** : Vérifiez que les fichiers suivants sont bien inclus dans votre commit :
-   - `src/api/<nom>/content-types/<nom>/schema.json`
-   - `types/generated/contentTypes.d.ts`
-3. **Push sur GitHub** : `git push origin master`
-4. **Déploiement Heroku** :
+### Pour les équipiers (Cycle de contribution)
+1. **Créer une branche dédiée** :
    ```bash
-   npm run prod:deploy
+   git checkout -b feature/ma-fonctionnalite
    ```
-5. **Permissions API** :
-   Une fois le déploiement terminé, connectez-vous à l'admin de production (`https://mon-strapi-cms-d348002bd1ec.herokuapp.com/admin`), puis ouvrez les droits de lecture :
-   - Rendez-vous dans **Settings** > **Users & Permissions plugin** > **Roles** > **Public**
-   - Cochez les cases `find` et `findOne` pour les collections voulues, puis enregistrez.
+2. **Développer et tester en local** :
+   ```bash
+   npm run dev:start
+   ```
+   *(Si vous modifiez des schémas ou créez des modèles, faites-le toujours dans l'admin locale `http://localhost:1337/admin`)*.
+3. **Valider le build TypeScript avant de soumettre** :
+   ```bash
+   npm run build
+   ```
+4. **Commiter et pousser votre branche** :
+   ```bash
+   git add .
+   git commit -m "feat(api): ajout de ma fonctionnalite"
+   git push origin feature/ma-fonctionnalite
+   ```
+5. **Ouvrir une Pull Request (PR)** :
+   - Rendez-vous sur GitHub : `https://github.com/koddyb/mon-strapi-cms`
+   - Cliquez sur **Compare & pull request** vers la branche `master`.
+
+### Validation & Déploiement en Production
+1. **Revue & Merge** : Le lead vérifie la Pull Request et la fusionne sur `master`.
+2. **Déploiement automatique Heroku** :
+   - Heroku est connecté au dépôt GitHub et surveille la branche `master`.
+   - Dès la fusion de la PR, Heroku lance automatiquement `npm ci`, `npm run build` et redémarre l'application en production.
+3. **Permissions API** (si de nouveaux endpoints ont été ajoutés) :
+   - Connectez-vous sur l'admin de production (`https://mon-strapi-cms-d348002bd1ec.herokuapp.com/admin`).
+   - Allez dans **Settings** > **Users & Permissions plugin** > **Roles** > **Public**.
+   - Cochez `find` et `findOne` pour les nouvelles collections.
 
 ---
 
