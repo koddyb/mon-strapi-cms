@@ -1,0 +1,23 @@
+name: strapi-cms
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: strapi-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: strapi          # nom de la base
+      POSTGRES_USER: strapi        # user applicatif
+      POSTGRES_PASSWORD: strapi    # mot de passe (local uniquement, jamais en prod)
+    ports:
+      - "5432:5432"                # si 5432 est déjà pris → mets "5433:5432"
+    volumes:
+      - strapi_pgdata:/var/lib/postgresql/data   # volume nommé = données persistées entre les rebuilds
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U strapi -d strapi"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  strapi_pgdata:
