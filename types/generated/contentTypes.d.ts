@@ -496,15 +496,15 @@ export interface ApiPanierPanier extends Struct.CollectionTypeSchema {
       'api::panier.panier'
     > &
       Schema.Attribute.Private;
-    produit: Schema.Attribute.Relation<'oneToOne', 'api::produit.produit'>;
+    produits: Schema.Attribute.Relation<'oneToMany', 'api::produit.produit'>;
     publishedAt: Schema.Attribute.DateTime;
     qte: Schema.Attribute.Integer;
     titre: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    users: Schema.Attribute.Relation<
-      'manyToMany',
+    user: Schema.Attribute.Relation<
+      'manyToOne',
       'plugin::users-permissions.user'
     >;
   };
@@ -538,7 +538,7 @@ export interface ApiProduitProduit extends Struct.CollectionTypeSchema {
       'api::produit.produit'
     > &
       Schema.Attribute.Private;
-    panier: Schema.Attribute.Relation<'oneToOne', 'api::panier.panier'>;
+    panier: Schema.Attribute.Relation<'manyToOne', 'api::panier.panier'>;
     publishedAt: Schema.Attribute.DateTime;
     slug: Schema.Attribute.UID<'title'>;
     title: Schema.Attribute.String;
@@ -1004,7 +1004,6 @@ export interface PluginUsersPermissionsUser
   };
   options: {
     draftAndPublish: false;
-    timestamps: true;
   };
   attributes: {
     blocked: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
@@ -1024,7 +1023,7 @@ export interface PluginUsersPermissionsUser
       'plugin::users-permissions.user'
     > &
       Schema.Attribute.Private;
-    paniers: Schema.Attribute.Relation<'manyToMany', 'api::panier.panier'>;
+    paniers: Schema.Attribute.Relation<'oneToMany', 'api::panier.panier'>;
     password: Schema.Attribute.Password &
       Schema.Attribute.Private &
       Schema.Attribute.SetMinMaxLength<{

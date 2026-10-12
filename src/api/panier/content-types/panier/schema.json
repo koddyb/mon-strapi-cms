@@ -18,17 +18,17 @@
     "qte": {
       "type": "integer"
     },
-    "produit": {
+    "produits": {
       "type": "relation",
-      "relation": "oneToOne",
+      "relation": "oneToMany",
       "target": "api::produit.produit",
       "mappedBy": "panier"
     },
-    "users": {
+    "user": {
       "type": "relation",
-      "relation": "manyToMany",
+      "relation": "manyToOne",
       "target": "plugin::users-permissions.user",
-      "mappedBy": "paniers"
+      "inversedBy": "paniers"
     }
   }
 }

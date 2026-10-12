@@ -52,9 +52,9 @@
     },
     "panier": {
       "type": "relation",
-      "relation": "oneToOne",
+      "relation": "manyToOne",
       "target": "api::panier.panier",
-      "inversedBy": "produit"
+      "inversedBy": "produits"
     }
   }
 }

@@ -20,6 +20,7 @@
     "db:psql": "docker compose -f ../compose.yaml exec postgres psql -U strapi -d strapi",
     "dev:start": "npm run db:up && npm run develop",
     "backup": "mkdir -p backups && npx strapi export --no-encrypt --file backups/local-$(date +%Y%m%d-%H%M%S)",
+    "seed": "node scripts/seed-products.js",
     "predeploy": "bash scripts/predeploy-check.sh",
     "sync:pull": "bash scripts/sync-content.sh pull",
     "sync:push": "bash scripts/sync-content.sh push",
