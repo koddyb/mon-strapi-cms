@@ -1,4 +1,4 @@
-# 🛒 Mon Strapi CMS (Projet IRIS) — Guide Collaboratif
+# 🛒 Mon Strapi CMS (Projet)Guide Collaboratif
 
 Ce dépôt contient le backend headless **Strapi 5** (TypeScript) pour la gestion du catalogue de produits et des catégories e-commerce.
 
