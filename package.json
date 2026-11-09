@@ -4,6 +4,8 @@
   "private": true,
   "description": "A Strapi application",
   "scripts": {
+    "smoke": "node scripts/smoke-boutique.mjs",
+    "test": "node --test \"src/**/*.test.ts\"",
     "build": "strapi build",
     "console": "strapi console",
     "deploy": "strapi deploy",

@@ -71,6 +71,12 @@
       "relation": "oneToMany",
       "target": "api::panier.panier",
       "mappedBy": "user"
+    },
+    "commandes": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::commande.commande",
+      "mappedBy": "user"
     }
   }
 }

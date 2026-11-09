@@ -71,6 +71,7 @@ const PRODUCTS_DATA = [
     imageUrl: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=1000&q=80',
     imageName: 'casque-sans-fil-anc-studio-pro.jpg',
     imageAlt: 'Casque audio sans fil circum-aural noir avec réduction de bruit',
+    price: 249.99,
   },
   {
     title: 'Écouteurs True Wireless Neo ANC',
@@ -80,6 +81,7 @@ const PRODUCTS_DATA = [
     imageUrl: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=1000&q=80',
     imageName: 'ecouteurs-true-wireless-neo.jpg',
     imageAlt: 'Écouteurs intra-auriculaires True Wireless et leur étui de charge',
+    price: 129.99,
   },
   {
     title: 'Enceinte Bluetooth Nomade Pulse 360',
@@ -89,6 +91,7 @@ const PRODUCTS_DATA = [
     imageUrl: 'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=1000&q=80',
     imageName: 'enceinte-portable-pulse-360.jpg',
     imageAlt: 'Enceinte portable Bluetooth avec diffusion audio à 360 degrés',
+    price: 89.9,
   },
   {
     title: 'Barre de Son Dolby Atmos Cinema Wave',
@@ -98,6 +101,7 @@ const PRODUCTS_DATA = [
     imageUrl: 'https://images.unsplash.com/photo-1545454675-3531b543be5d?w=1000&q=80',
     imageName: 'barre-de-son-cinema-wave.jpg',
     imageAlt: 'Barre de son cinéma haute définition pour salon',
+    price: 399.0,
   },
   {
     title: 'Clavier Mécanique Sans Fil Apex Pro 75%',
@@ -107,6 +111,7 @@ const PRODUCTS_DATA = [
     imageUrl: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=1000&q=80',
     imageName: 'clavier-mecanique-apex-pro.jpg',
     imageAlt: 'Clavier mécanique sans fil compact rétroéclairé',
+    price: 159.0,
   },
   {
     title: 'Souris Ergonomique Sans Fil ErgoGlide Master',
@@ -116,6 +121,7 @@ const PRODUCTS_DATA = [
     imageUrl: 'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=1000&q=80',
     imageName: 'souris-ergonomique-ergoglide.jpg',
     imageAlt: 'Souris verticale ergonomique sans fil pour le bureau',
+    price: 79.9,
   },
   {
     title: 'Moniteur Incurvé 34" Ultrawide QHD Pro',
@@ -125,6 +131,7 @@ const PRODUCTS_DATA = [
     imageUrl: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=1000&q=80',
     imageName: 'moniteur-incurve-ultrawide-34.jpg',
     imageAlt: 'Moniteur incurvé 34 pouces ultra-large de bureau',
+    price: 549.0,
   },
   {
     title: 'Montre Connectée Titanium Horizon GPS',
@@ -134,6 +141,7 @@ const PRODUCTS_DATA = [
     imageUrl: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=1000&q=80',
     imageName: 'montre-connectee-titanium-horizon.jpg',
     imageAlt: 'Montre intelligente en titane avec bracelet sport',
+    price: 329.0,
   },
   {
     title: 'Bracelet d’Activité Pulse Fit Tracker',
@@ -143,6 +151,7 @@ const PRODUCTS_DATA = [
     imageUrl: 'https://images.unsplash.com/photo-1575311373937-040b8e1fd5b6?w=1000&q=80',
     imageName: 'bracelet-activite-pulse-fit.jpg',
     imageAlt: 'Bracelet connecté de suivi d’activité physique et sommeil',
+    price: 49.9,
   },
   {
     title: 'Station de Charge Sans Fil 3-en-1 MagDock',
@@ -152,6 +161,7 @@ const PRODUCTS_DATA = [
     imageUrl: 'https://images.unsplash.com/photo-1586816879360-004f5b0c51e5?w=1000&q=80',
     imageName: 'station-charge-magdock-3en1.jpg',
     imageAlt: 'Station de charge sans fil magnétique pliable en aluminium',
+    price: 69.9,
   },
 ];
 
@@ -204,6 +214,14 @@ async function seed() {
 
     if (existing && existing.length > 0) {
       console.log(`   ℹ️ Produit déjà présent : "${prodData.title}" (${existing[0].documentId})`);
+      if (existing[0].price == null) {
+        await strapi.documents('api::produit.produit').update({
+          documentId: existing[0].documentId,
+          data: { price: prodData.price },
+        });
+        await strapi.documents('api::produit.produit').publish({ documentId: existing[0].documentId });
+        console.log(`   💶 Prix ajouté : ${prodData.price} €`);
+      }
       continue;
     }
 
@@ -252,6 +270,7 @@ async function seed() {
           title: prodData.title,
           slug: prodData.slug,
           description: prodData.description,
+          price: prodData.price,
           category: categoryDoc.documentId,
           image: uploadedMedia.id,
           images: [uploadedMedia.id],

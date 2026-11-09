@@ -8,27 +8,24 @@
     "description": ""
   },
   "options": {
-    "draftAndPublish": true
+    "draftAndPublish": false
   },
   "pluginOptions": {},
   "attributes": {
     "titre": {
       "type": "string"
     },
-    "qte": {
-      "type": "integer"
-    },
-    "produits": {
-      "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::produit.produit",
-      "mappedBy": "panier"
-    },
     "user": {
       "type": "relation",
       "relation": "manyToOne",
       "target": "plugin::users-permissions.user",
       "inversedBy": "paniers"
+    },
+    "lignes": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::ligne-panier.ligne-panier",
+      "mappedBy": "panier"
     }
   }
 }
