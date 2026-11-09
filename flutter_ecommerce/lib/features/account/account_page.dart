@@ -1,0 +1,258 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../core/network/api_exception.dart';
+import 'auth_repository.dart';
+import 'auth_session.dart';
+import 'order_repository.dart';
+
+class AccountPage extends ConsumerStatefulWidget {
+  const AccountPage({super.key, this.returnTo});
+
+  final String? returnTo;
+
+  @override
+  ConsumerState<AccountPage> createState() => _AccountPageState();
+}
+
+class _AccountPageState extends ConsumerState<AccountPage> {
+  final _usernameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _registering = false;
+  bool _submitting = false;
+  bool _redirecting = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    setState(() {
+      _submitting = true;
+      _error = null;
+    });
+    try {
+      final repository = ref.read(authRepositoryProvider);
+      final session = _registering
+          ? await repository.register(
+              username: _usernameController.text.trim(),
+              email: _emailController.text.trim(),
+              password: _passwordController.text,
+            )
+          : await repository.login(
+              email: _emailController.text.trim(),
+              password: _passwordController.text,
+            );
+      final destination = _safeReturnLocation(widget.returnTo);
+      if (destination != null) _redirecting = true;
+      ref.read(authSessionProvider.notifier).signIn(session);
+      if (mounted) context.go(destination ?? '/');
+    } on ApiException catch (error) {
+      if (mounted) setState(() => _error = error.userMessage);
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final session = ref.watch(authSessionProvider);
+    final destination = _safeReturnLocation(widget.returnTo);
+    if (session != null && destination != null && !_redirecting) {
+      _redirecting = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) context.go(destination);
+      });
+    }
+    final orders = session == null ? null : ref.watch(customerOrdersProvider);
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Compte TLveta'),
+        leading: IconButton(
+          tooltip: 'Retour à la boutique',
+          onPressed: () => context.go('/'),
+          icon: const Icon(Icons.arrow_back),
+        ),
+      ),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 460),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: session == null
+                ? _buildForm()
+                : _buildSignedIn(session, orders!),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildForm() {
+    return ListView(
+      shrinkWrap: true,
+      children: [
+        Text(
+          _registering ? 'Créer un compte client' : 'Connexion client',
+          style: Theme.of(context).textTheme.headlineSmall,
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Ce compte client est distinct du compte administrateur Strapi.',
+        ),
+        const SizedBox(height: 24),
+        if (_registering) ...[
+          TextField(
+            controller: _usernameController,
+            textInputAction: TextInputAction.next,
+            decoration: const InputDecoration(labelText: 'Nom d’utilisateur'),
+          ),
+          const SizedBox(height: 12),
+        ],
+        TextField(
+          controller: _emailController,
+          keyboardType: TextInputType.emailAddress,
+          textInputAction: TextInputAction.next,
+          decoration: const InputDecoration(labelText: 'Adresse e-mail'),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _passwordController,
+          obscureText: true,
+          onSubmitted: (_) => _submit(),
+          decoration: const InputDecoration(labelText: 'Mot de passe'),
+        ),
+        if (_error != null) ...[
+          const SizedBox(height: 16),
+          Text(
+            _error!,
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          ),
+        ],
+        const SizedBox(height: 20),
+        FilledButton(
+          onPressed: _submitting ? null : _submit,
+          child: _submitting
+              ? const SizedBox.square(
+                  dimension: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Text(_registering ? 'Créer mon compte' : 'Se connecter'),
+        ),
+        TextButton(
+          onPressed: _submitting
+              ? null
+              : () => setState(() {
+                  _registering = !_registering;
+                  _error = null;
+                }),
+          child: Text(
+            _registering ? 'J’ai déjà un compte' : 'Créer un compte client',
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSignedIn(
+    AuthSession session,
+    AsyncValue<List<CustomerOrder>> orders,
+  ) {
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Bonjour ${session.username}',
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+          const SizedBox(height: 8),
+          Text(session.email),
+          const SizedBox(height: 24),
+          FilledButton.icon(
+            onPressed: () => context.push('/panier'),
+            icon: const Icon(Icons.shopping_bag_outlined),
+            label: const Text('Voir mon panier'),
+          ),
+          const SizedBox(height: 10),
+          OutlinedButton(
+            onPressed: () {
+              ref.read(authSessionProvider.notifier).signOut();
+              ref.invalidate(customerOrdersProvider);
+              context.go('/');
+            },
+            child: const Text('Se déconnecter'),
+          ),
+          const SizedBox(height: 28),
+          Text('Mes commandes', style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 8),
+          orders.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (error, stackTrace) => Text(
+              error is ApiException
+                  ? error.userMessage
+                  : 'Impossible de charger les commandes.',
+            ),
+            data: (items) => items.isEmpty
+                ? const Text('Aucune commande pour le moment.')
+                : Column(
+                    children: [
+                      for (final order in items)
+                        Card(
+                          child: ListTile(
+                            title: Text(_orderStatusLabel(order.status)),
+                            subtitle: Text(
+                              order.createdAt.toLocal().toString().substring(
+                                0,
+                                10,
+                              ),
+                            ),
+                            trailing: Text(
+                              '${order.total.toStringAsFixed(2).replaceAll('.', ',')} €',
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String? _safeReturnLocation(String? location) {
+  if (location == null) {
+    return null;
+  }
+  final uri = Uri.tryParse(location);
+  if (uri == null || uri.hasScheme || uri.hasAuthority || !uri.path.startsWith('/')) {
+    return null;
+  }
+  if (RegExp(r'^/produit/[A-Za-z0-9_-]+$').hasMatch(uri.path) &&
+      uri.queryParameters.isEmpty) {
+    return uri.toString();
+  }
+  if (uri.path == '/' &&
+      uri.queryParameters.length == 1 &&
+      RegExp(r'^[A-Za-z0-9_-]+$')
+          .hasMatch(uri.queryParameters['livraison'] ?? '')) {
+    return uri.toString();
+  }
+  return null;
+}
+
+String _orderStatusLabel(String status) => switch (status) {
+  'pending' => 'En attente de paiement',
+  'paid' => 'Payée',
+  'failed' => 'Échec du paiement',
+  'cancelled' => 'Annulée',
+  _ => 'Commande',
+};
