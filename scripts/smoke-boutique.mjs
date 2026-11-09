@@ -171,12 +171,42 @@ async function sectionCommande() {
   check('mes-commandes sans jeton → 401/403', r.status === 401 || r.status === 403, `status ${r.status}`);
 }
 
+async function sectionConcurrence() {
+  const username = `smoke-${Date.now()}-race`;
+  const email = `${username}@example.test`;
+  const reg = await register(username, email);
+  const T = reg.json?.jwt;
+  check('register utilisateur course → 200', reg.status === 200 && !!T, `status ${reg.status}`);
+  const prods = state.produits.slice(0, 3);
+  check('au moins 3 produits publiés pour la course', prods.length === 3, `${prods.length}`);
+
+  const adds = await Promise.all(
+    prods.map((p) =>
+      api('/api/mon-panier/lignes', { method: 'POST', token: T, body: { productDocumentId: p.documentId, quantity: 1 } }),
+    ),
+  );
+  check('3 ajouts parallèles (1er panier) → 200 x3', adds.every((a) => a.status === 200), adds.map((a) => a.status).join(','));
+  let r = await api('/api/mon-panier', { token: T });
+  check('mon-panier → 3 lignes après 3 ajouts parallèles', r.json?.data?.items?.length === 3, `${r.json?.data?.items?.length} lignes`);
+
+  const outs = await Promise.all([1, 2, 3].map(() => api('/api/mon-panier/commander', { method: 'POST', token: T })));
+  const codes = outs.map((o) => o.status).sort();
+  check('3 commander parallèles → un seul 201, deux 400', codes.join(',') === '201,400,400', codes.join(','));
+  check(
+    'les 400 disent « Le panier est vide. »',
+    outs.filter((o) => o.status === 400).every((o) => o.json?.error?.message === 'Le panier est vide.'),
+  );
+  r = await api('/api/mes-commandes', { token: T });
+  check('mes-commandes → exactement 1 commande', r.status === 200 && r.json?.data?.length === 1, `${r.json?.data?.length}`);
+}
+
 try {
   await sectionCatalogue();
   await sectionComptes();
   await sectionPanierAnonyme();
   await sectionPanier();
   await sectionCommande();
+  await sectionConcurrence();
 } catch (e) {
   failures += 1;
   console.log(`✘ exception — ${e?.message ?? e}`);

@@ -53,7 +53,16 @@ export function serializeCart(
       documentId: l.documentId,
       quantity: l.qte,
       subtotal: subtotalCents / 100,
-      product: l.produit ? { ...l.produit, price: unit === null ? null : unit / 100 } : null,
+      product: l.produit
+        ? {
+            documentId: l.produit.documentId,
+            title: l.produit.title,
+            slug: l.produit.slug ?? null,
+            price: unit === null ? null : unit / 100,
+            image: l.produit.image ? { url: l.produit.image.url } : null,
+            category: l.produit.category ? { name: l.produit.category.name } : null,
+          }
+        : null,
     };
   });
 

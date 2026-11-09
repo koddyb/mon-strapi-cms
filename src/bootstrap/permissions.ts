@@ -36,6 +36,7 @@ export const WANTED_PERMISSIONS: Record<'public' | 'authenticated', string[]> = 
  */
 export async function ensurePermissions(strapi: Core.Strapi): Promise<void> {
   const added: string[] = [];
+  const extra: string[] = [];
 
   for (const [type, actions] of Object.entries(WANTED_PERMISSIONS)) {
     const [role] = await strapi.documents(ROLE_UID).findMany({
@@ -50,6 +51,11 @@ export async function ensurePermissions(strapi: Core.Strapi): Promise<void> {
     const existing = new Set(
       ((role as any).permissions ?? []).map((p: { action: string }) => p.action),
     );
+    for (const a of existing as Set<string>) {
+      if (/^api::(panier|ligne-panier|commande)\./.test(a) && !actions.includes(a)) {
+        extra.push(`${type}:${a}`);
+      }
+    }
     for (const action of actions) {
       if (existing.has(action)) continue;
       await strapi.documents(PERMISSION_UID).create({
@@ -57,6 +63,12 @@ export async function ensurePermissions(strapi: Core.Strapi): Promise<void> {
       });
       added.push(`${type}:${action}`);
     }
+  }
+
+  if (extra.length > 0) {
+    strapi.log.warn(
+      `[permissions] actions panier/commande hors liste voulue (CRUD générique ouvert dans l'admin ?) : ${extra.join(', ')}`,
+    );
   }
 
   if (added.length > 0) {
