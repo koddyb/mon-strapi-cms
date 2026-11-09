@@ -130,12 +130,53 @@ async function sectionPanier() {
   check('A : ajoute P2 → 2 lignes', r.status === 200 && r.json?.data?.items?.length === 2, `status ${r.status}`);
 }
 
+async function sectionCommande() {
+  const [p1, p2] = state.produits;
+  const A = state.a.jwt;
+  const B = state.b.jwt;
+  const expected = (Math.round(Number(p1.price) * 100) + Math.round(Number(p2.price) * 100)) / 100;
+
+  let r = await api('/api/mon-panier/commander', { method: 'POST', token: A });
+  check(
+    'A : commander → 201, total = somme des prix publics',
+    r.status === 201 && r.json?.data?.total === expected && r.json.data.lineItems?.length === 2,
+    `status ${r.status} total ${r.json?.data?.total} attendu ${expected} ${JSON.stringify(r.json?.error ?? '')}`,
+  );
+  r = await api('/api/mon-panier/commander', { method: 'POST', token: A });
+  check(
+    'A : commander à nouveau → 400 panier vide',
+    r.status === 400 && r.json?.error?.message === 'Le panier est vide.',
+    `status ${r.status} ${JSON.stringify(r.json?.error ?? '')}`,
+  );
+  r = await api('/api/mon-panier', { token: A });
+  check('A : mon-panier → 0 ligne', r.status === 200 && r.json?.data?.items?.length === 0, `status ${r.status}`);
+  r = await api('/api/mes-commandes', { token: A });
+  check(
+    'A : mes-commandes → 1 commande, 2 lineItems',
+    r.status === 200 && r.json?.data?.length === 1 && r.json.data[0].lineItems?.length === 2 && !('user' in r.json.data[0]),
+    `status ${r.status} ${JSON.stringify(r.json?.error ?? '')}`,
+  );
+  r = await api('/api/mes-commandes', { token: B });
+  check('B : mes-commandes → 0 commande', r.status === 200 && r.json?.data?.length === 0, `status ${r.status}`);
+
+  r = await api('/api/mon-panier/lignes', { method: 'POST', token: B, body: { productDocumentId: p1.documentId, quantity: 1 } });
+  check('B : ajoute P1 → 200', r.status === 200, `status ${r.status}`);
+  r = await api('/api/mon-panier/commander', { method: 'POST', token: B, body: { total: 0.01 } });
+  check(
+    'B : commander avec corps { total: 0.01 } → total = prix(P1)',
+    r.status === 201 && r.json?.data?.total === Number(p1.price),
+    `status ${r.status} total ${r.json?.data?.total}`,
+  );
+  r = await api('/api/mes-commandes');
+  check('mes-commandes sans jeton → 401/403', r.status === 401 || r.status === 403, `status ${r.status}`);
+}
+
 try {
   await sectionCatalogue();
   await sectionComptes();
   await sectionPanierAnonyme();
   await sectionPanier();
-  // Task 5 : ajouter la section commande ici.
+  await sectionCommande();
 } catch (e) {
   failures += 1;
   console.log(`✘ exception — ${e?.message ?? e}`);
