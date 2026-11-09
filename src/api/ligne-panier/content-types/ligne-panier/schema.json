@@ -1,0 +1,33 @@
+{
+  "kind": "collectionType",
+  "collectionName": "lignes_panier",
+  "info": {
+    "singularName": "ligne-panier",
+    "pluralName": "lignes-panier",
+    "displayName": "Ligne panier",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "qte": {
+      "type": "integer",
+      "required": true,
+      "min": 1,
+      "max": 99
+    },
+    "panier": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::panier.panier",
+      "inversedBy": "lignes"
+    },
+    "produit": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::produit.produit"
+    }
+  }
+}

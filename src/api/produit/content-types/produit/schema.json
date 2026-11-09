@@ -50,11 +50,10 @@
       "target": "api::category.category",
       "inversedBy": "produits"
     },
-    "panier": {
-      "type": "relation",
-      "relation": "manyToOne",
-      "target": "api::panier.panier",
-      "inversedBy": "produits"
+    "price": {
+      "type": "decimal",
+      "required": true,
+      "min": 0.01
     }
   }
 }

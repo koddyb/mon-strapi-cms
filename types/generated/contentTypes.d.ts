@@ -475,6 +475,86 @@ export interface ApiCategoryCategory extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiCommandeCommande extends Struct.CollectionTypeSchema {
+  collectionName: 'commandes';
+  info: {
+    description: '';
+    displayName: 'Commande';
+    pluralName: 'commandes';
+    singularName: 'commande';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    lineItems: Schema.Attribute.JSON & Schema.Attribute.Required;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::commande.commande'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    total: Schema.Attribute.Decimal &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    user: Schema.Attribute.Relation<
+      'manyToOne',
+      'plugin::users-permissions.user'
+    >;
+  };
+}
+
+export interface ApiLignePanierLignePanier extends Struct.CollectionTypeSchema {
+  collectionName: 'lignes_panier';
+  info: {
+    description: '';
+    displayName: 'Ligne panier';
+    pluralName: 'lignes-panier';
+    singularName: 'ligne-panier';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::ligne-panier.ligne-panier'
+    > &
+      Schema.Attribute.Private;
+    panier: Schema.Attribute.Relation<'manyToOne', 'api::panier.panier'>;
+    produit: Schema.Attribute.Relation<'manyToOne', 'api::produit.produit'>;
+    publishedAt: Schema.Attribute.DateTime;
+    qte: Schema.Attribute.Integer &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          max: 99;
+          min: 1;
+        },
+        number
+      >;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiPanierPanier extends Struct.CollectionTypeSchema {
   collectionName: 'paniers';
   info: {
@@ -484,21 +564,23 @@ export interface ApiPanierPanier extends Struct.CollectionTypeSchema {
     singularName: 'panier';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    lignes: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::ligne-panier.ligne-panier'
+    >;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
       'api::panier.panier'
     > &
       Schema.Attribute.Private;
-    produits: Schema.Attribute.Relation<'oneToMany', 'api::produit.produit'>;
     publishedAt: Schema.Attribute.DateTime;
-    qte: Schema.Attribute.Integer;
     titre: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -538,7 +620,14 @@ export interface ApiProduitProduit extends Struct.CollectionTypeSchema {
       'api::produit.produit'
     > &
       Schema.Attribute.Private;
-    panier: Schema.Attribute.Relation<'manyToOne', 'api::panier.panier'>;
+    price: Schema.Attribute.Decimal &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0.01;
+        },
+        number
+      >;
     publishedAt: Schema.Attribute.DateTime;
     slug: Schema.Attribute.UID<'title'>;
     title: Schema.Attribute.String;
@@ -1007,6 +1096,7 @@ export interface PluginUsersPermissionsUser
   };
   attributes: {
     blocked: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    commandes: Schema.Attribute.Relation<'oneToMany', 'api::commande.commande'>;
     confirmationToken: Schema.Attribute.String & Schema.Attribute.Private;
     confirmed: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     createdAt: Schema.Attribute.DateTime;
@@ -1060,6 +1150,8 @@ declare module '@strapi/strapi' {
       'admin::transfer-token-permission': AdminTransferTokenPermission;
       'admin::user': AdminUser;
       'api::category.category': ApiCategoryCategory;
+      'api::commande.commande': ApiCommandeCommande;
+      'api::ligne-panier.ligne-panier': ApiLignePanierLignePanier;
       'api::panier.panier': ApiPanierPanier;
       'api::produit.produit': ApiProduitProduit;
       'plugin::content-releases.release': PluginContentReleasesRelease;
