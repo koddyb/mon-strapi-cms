@@ -83,10 +83,59 @@ async function sectionPanierAnonyme() {
   check('GET /api/mon-panier sans jeton → 401/403', status === 401 || status === 403, `status ${status}`);
 }
 
+async function sectionPanier() {
+  const [p1, p2] = state.produits;
+  const price1 = Number(p1.price);
+  const A = state.a.jwt;
+  const B = state.b.jwt;
+  const post = (token, productDocumentId, quantity) =>
+    api('/api/mon-panier/lignes', { method: 'POST', token, body: { productDocumentId, quantity } });
+
+  let r = await api('/api/mon-panier', { token: A });
+  check('A : GET mon-panier → 200, 0 ligne', r.status === 200 && r.json?.data?.items?.length === 0, `status ${r.status}`);
+
+  r = await post(A, p1.documentId, 2);
+  const line = r.json?.data?.items?.[0];
+  check(
+    'A : ajoute P1 x2 → total = 2 x prix',
+    r.status === 200 && line?.quantity === 2 && r.json.data.total === Math.round(2 * price1 * 100) / 100,
+    `status ${r.status} ${JSON.stringify(r.json?.error ?? r.json?.data?.total)}`,
+  );
+  state.a.lineId = line?.documentId;
+
+  r = await post(A, p1.documentId, 1);
+  check(
+    'A : même produit x1 → une ligne, quantity 3',
+    r.status === 200 && r.json?.data?.items?.length === 1 && r.json.data.items[0].quantity === 3,
+    `status ${r.status}`,
+  );
+
+  for (const q of [0, 100, 'abc', 1.5]) {
+    r = await post(A, p1.documentId, q);
+    check(`A : quantity ${JSON.stringify(q)} → 400`, r.status === 400, `status ${r.status}`);
+  }
+  r = await post(A, p1.documentId, 97);
+  check('A : cumul 100 → 400', r.status === 400, `status ${r.status}`);
+
+  r = await api(`/api/mon-panier/lignes/${state.a.lineId}`, { method: 'PUT', token: B, body: { quantity: 5 } });
+  check('B : PUT ligne de A → 404', r.status === 404, `status ${r.status}`);
+  r = await api(`/api/mon-panier/lignes/${state.a.lineId}`, { method: 'DELETE', token: B });
+  check('B : DELETE ligne de A → 404', r.status === 404, `status ${r.status}`);
+  r = await api('/api/mon-panier', { token: B });
+  check('B : GET mon-panier → 0 ligne', r.status === 200 && r.json?.data?.items?.length === 0, `status ${r.status}`);
+
+  r = await api(`/api/mon-panier/lignes/${state.a.lineId}`, { method: 'PUT', token: A, body: { quantity: 1 } });
+  check('A : PUT ligne à 1 → quantity 1', r.status === 200 && r.json?.data?.items?.[0]?.quantity === 1, `status ${r.status}`);
+  r = await post(A, p2.documentId, 1);
+  check('A : ajoute P2 → 2 lignes', r.status === 200 && r.json?.data?.items?.length === 2, `status ${r.status}`);
+}
+
 try {
   await sectionCatalogue();
   await sectionComptes();
   await sectionPanierAnonyme();
+  await sectionPanier();
+  // Task 5 : ajouter la section commande ici.
 } catch (e) {
   failures += 1;
   console.log(`✘ exception — ${e?.message ?? e}`);
