@@ -80,7 +80,11 @@ Tous les scripts s'exécutent depuis le dossier `cms-headless/` :
 |---|---|
 | `npm run dev:start` | Démarre le conteneur Postgres Docker (attend qu'il soit prêt) puis lance Strapi en mode développement avec rechargement à chaud. |
 | `npm run develop` | Lance uniquement le serveur Strapi (si Postgres Docker tourne déjà). |
-| `npm run seed` | Télécharge et injecte 10 produits High-Tech complets avec images et catégories dans la base. |
+| `npm run seed` | Télécharge et injecte 10 produits High-Tech complets avec images, prix et catégories dans la base. |
+| `npm run seed:customers` | Crée 3 clients de test confirmés (`alice.martin`, `bruno.leroy`, `chloe.dubois` en `@example.test`). Mot de passe commun lu dans `SEED_CUSTOMER_PASSWORD` (8 caractères minimum, jamais versionné). En prod : `heroku run -e SEED_CUSTOMER_PASSWORD='…' npm run seed:customers --app mon-strapi-cms`. |
+| `npm run cleanup:test-accounts` | **Local uniquement.** Sauvegarde (`backup`) puis supprime les comptes `@example.test` créés par les tests automatisés (hors clients de test), avec leurs paniers et commandes. |
+| `npm test` | Tests unitaires (`node --test`) : calcul du total, sérialisation du panier, verrou par client. |
+| `npm run smoke` | Test de bout en bout de l'API sur `http://localhost:1337`. **Ne jamais le lancer contre la production** : chaque passage crée des comptes et des commandes. |
 | `npm run db:up` | Démarre le conteneur Docker Postgres en arrière-plan. |
 | `npm run db:down` | Arrête le conteneur Docker Postgres. |
 | `npm run db:status` | Vérifie l'état de santé du conteneur Postgres (`pg_isready`). |

@@ -23,6 +23,8 @@
     "dev:start": "npm run db:up && npm run develop",
     "backup": "mkdir -p backups && npx strapi export --no-encrypt --file backups/local-$(date +%Y%m%d-%H%M%S)",
     "seed": "node scripts/seed-products.js",
+    "seed:customers": "node scripts/seed-customers.js",
+    "cleanup:test-accounts": "npm run backup && node scripts/cleanup-test-accounts.js",
     "predeploy": "bash scripts/predeploy-check.sh",
     "sync:pull": "bash scripts/sync-content.sh pull",
     "sync:push": "bash scripts/sync-content.sh push",
