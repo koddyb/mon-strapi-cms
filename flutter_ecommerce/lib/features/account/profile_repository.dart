@@ -33,12 +33,13 @@ class ProfileRepository {
     required String phoneNumber,
     required String avatarUrl,
   }) async {
-    final session = _session;
-    if (session == null) {
-      throw const ApiException(message: 'Connectez-vous pour modifier le profil.');
+    if (_session == null) {
+      throw const ApiException(
+        message: 'Connectez-vous pour modifier le profil.',
+      );
     }
     final response = await _client.put(
-      'users/${session.userId}',
+      'client/profil',
       body: {
         'firstName': firstName,
         'lastName': lastName,

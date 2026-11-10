@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class AuthSession {
   const AuthSession({
     required this.jwt,
-    required this.userId,
     required this.email,
     required this.username,
     this.firstName = '',
@@ -12,7 +11,6 @@ class AuthSession {
   });
 
   final String jwt;
-  final String userId;
   final String email;
   final String username;
   final String firstName;
@@ -40,7 +38,6 @@ class AuthSessionController extends Notifier<AuthSession?> {
     if (session == null) return;
     state = AuthSession(
       jwt: session.jwt,
-      userId: session.userId,
       email: session.email,
       username: session.username,
       firstName: firstName,

@@ -45,14 +45,12 @@ class AuthRepository {
         message: 'Strapi did not return a customer session.',
       );
     }
-    final id = user['id'];
     final email = user['email'];
     final username = user['username'];
     final firstName = user['firstName'];
     final lastName = user['lastName'];
     final avatarUrl = user['avatarUrl'];
-    if (id is! num ||
-        email is! String ||
+    if (email is! String ||
         username is! String ||
         (firstName != null && firstName is! String) ||
         (lastName != null && lastName is! String) ||
@@ -63,7 +61,6 @@ class AuthRepository {
     }
     return AuthSession(
       jwt: jwt,
-      userId: id.toInt().toString(),
       email: email,
       username: username,
       firstName: firstName as String? ?? '',

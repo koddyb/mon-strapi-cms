@@ -34,7 +34,6 @@ void main() {
       ),
       const AuthSession(
         jwt: 'customer-jwt',
-        userId: '37',
         email: 'client@example.com',
         username: 'client-tlveta',
       ),
@@ -51,7 +50,7 @@ void main() {
   test('updates only the current customer profile fields', () async {
     final client = MockClient((request) async {
       expect(request.method, 'PUT');
-      expect(request.url.path, '/api/users/37');
+      expect(request.url.path, '/api/client/profil');
       expect(
         jsonDecode(request.body),
         {
@@ -63,13 +62,15 @@ void main() {
       );
       return http.Response(
         jsonEncode({
-          'id': 37,
-          'username': 'client-tlveta',
-          'email': 'client@example.com',
-          'firstName': 'Amina',
-          'lastName': 'Diallo',
-          'phoneNumber': '+33123456789',
-          'avatarUrl': 'https://example.com/avatar.jpg',
+          'data': {
+            'id': 37,
+            'username': 'client-tlveta',
+            'email': 'client@example.com',
+            'firstName': 'Amina',
+            'lastName': 'Diallo',
+            'phoneNumber': '+33123456789',
+            'avatarUrl': 'https://example.com/avatar.jpg',
+          },
         }),
         200,
         headers: {'content-type': 'application/json; charset=utf-8'},
@@ -83,7 +84,6 @@ void main() {
       ),
       const AuthSession(
         jwt: 'customer-jwt',
-        userId: '37',
         email: 'client@example.com',
         username: 'client-tlveta',
       ),
