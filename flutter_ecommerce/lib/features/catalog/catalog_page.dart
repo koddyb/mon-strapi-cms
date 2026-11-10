@@ -107,7 +107,7 @@ class _CatalogPageState extends ConsumerState<CatalogPage> {
                         final maxWidth = constraints.crossAxisExtent
                             .clamp(0.0, 1160.0)
                             .toDouble();
-                        final columns = ((maxWidth + 24) / 270)
+                        final columns = ((maxWidth + 20) / 290)
                             .floor()
                             .clamp(1, 4)
                             .toInt();
@@ -130,7 +130,7 @@ class _CatalogPageState extends ConsumerState<CatalogPage> {
                                   crossAxisCount: columns,
                                   mainAxisSpacing: 20,
                                   crossAxisSpacing: 20,
-                                  mainAxisExtent: 390,
+                                  mainAxisExtent: columns == 1 ? 390 : 365,
                                 ),
                           ),
                         );
@@ -273,6 +273,7 @@ class _HeroBanner extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final compact = constraints.maxWidth < 760;
+        final veryCompact = constraints.maxWidth < 440;
         return Padding(
           padding: EdgeInsets.symmetric(horizontal: compact ? 12 : 32),
           child: Center(
@@ -293,10 +294,10 @@ class _HeroBanner extends StatelessWidget {
                     ),
                     Padding(
                       padding: EdgeInsets.fromLTRB(
-                        compact ? 24 : 64,
-                        compact ? 44 : 70,
-                        compact ? 24 : 64,
-                        compact ? 48 : 74,
+                        veryCompact ? 18 : compact ? 24 : 64,
+                        veryCompact ? 32 : compact ? 44 : 70,
+                        veryCompact ? 18 : compact ? 24 : 64,
+                        veryCompact ? 36 : compact ? 48 : 74,
                       ),
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 620),
@@ -318,7 +319,11 @@ class _HeroBanner extends StatelessWidget {
                               style: Theme.of(context).textTheme.headlineLarge
                                   ?.copyWith(
                                     color: Colors.white,
-                                    fontSize: compact ? 40 : 54,
+                                    fontSize: veryCompact
+                                        ? 32
+                                        : compact
+                                        ? 40
+                                        : 54,
                                   ),
                             ),
                             const SizedBox(height: 18),
@@ -439,7 +444,12 @@ class _CatalogHeading extends StatelessWidget {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 1200),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(32, 64, 32, 18),
+          padding: EdgeInsets.fromLTRB(
+            MediaQuery.sizeOf(context).width < 600 ? 16 : 32,
+            MediaQuery.sizeOf(context).width < 600 ? 40 : 64,
+            MediaQuery.sizeOf(context).width < 600 ? 16 : 32,
+            18,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -608,6 +618,7 @@ class _ProductCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final productLocation = '/produit/${product.documentId}';
+    final compactCard = MediaQuery.sizeOf(context).width < 600;
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -627,7 +638,12 @@ class _ProductCard extends ConsumerWidget {
           children: [
             Expanded(child: _ProductImage(imageUrl: product.imageUrl)),
             Padding(
-              padding: const EdgeInsets.fromLTRB(18, 16, 18, 17),
+              padding: EdgeInsets.fromLTRB(
+                compactCard ? 12 : 18,
+                compactCard ? 12 : 16,
+                compactCard ? 12 : 18,
+                compactCard ? 13 : 17,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -648,7 +664,9 @@ class _ProductCard extends ConsumerWidget {
                     product.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleLarge,
+                    style: compactCard
+                        ? Theme.of(context).textTheme.titleMedium
+                        : Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 7),
                   Text(
@@ -961,10 +979,17 @@ class _ShippingAddressCardState extends ConsumerState<ShippingAddressCard> {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 900),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+          padding: EdgeInsets.fromLTRB(
+            MediaQuery.sizeOf(context).width < 400 ? 16 : 24,
+            24,
+            MediaQuery.sizeOf(context).width < 400 ? 16 : 24,
+            8,
+          ),
           child: Card(
             child: Padding(
-              padding: const EdgeInsets.all(24),
+              padding: EdgeInsets.all(
+                MediaQuery.sizeOf(context).width < 400 ? 16 : 24,
+              ),
               child: _saved ? _buildConfirmation(context) : _buildForm(context),
             ),
           ),
@@ -995,8 +1020,26 @@ class _ShippingAddressCardState extends ConsumerState<ShippingAddressCard> {
             'Complément d’adresse (facultatif)',
             required: false,
           ),
-          _addressField(_postalCodeController, 'Code postal'),
-          _addressField(_cityController, 'Ville'),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final postalCode = _addressField(
+                _postalCodeController,
+                'Code postal',
+              );
+              final city = _addressField(_cityController, 'Ville');
+              if (constraints.maxWidth < 560) {
+                return Column(children: [postalCode, city]);
+              }
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: postalCode),
+                  const SizedBox(width: 12),
+                  Expanded(child: city),
+                ],
+              );
+            },
+          ),
           _addressField(_countryController, 'Pays'),
           _addressField(
             _phoneController,
@@ -1065,8 +1108,9 @@ class _ShippingAddressCardState extends ConsumerState<ShippingAddressCard> {
         const Text('Merci pour votre commande.'),
         const SizedBox(height: 16),
         OutlinedButton(
-          onPressed: () => context.go('/'),
-          child: const Text('Continuer mes achats'),
+          onPressed: () =>
+              context.go('/commandes/${widget.orderDocumentId}/suivi'),
+          child: const Text('Suivre ma commande'),
         ),
       ],
     );
