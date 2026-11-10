@@ -83,9 +83,11 @@ class _AccountPageState extends ConsumerState<AccountPage> {
       ),
       body: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 460),
+          constraints: BoxConstraints(maxWidth: session == null ? 460 : 1040),
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: EdgeInsets.all(
+              MediaQuery.sizeOf(context).width < 400 ? 16 : 24,
+            ),
             child: session == null
                 ? _buildForm()
                 : _buildSignedIn(session, orders!),
@@ -165,101 +167,144 @@ class _AccountPageState extends ConsumerState<AccountPage> {
     AuthSession session,
     AsyncValue<List<CustomerOrder>> orders,
   ) {
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              ClipOval(
-                child: SizedBox.square(
-                  dimension: 52,
-                  child: session.avatarUrl.isEmpty
-                      ? const ColoredBox(
-                          color: Color(0xFFECEDE7),
-                          child: Icon(Icons.person_outline),
-                        )
-                      : Image.network(
-                          session.avatarUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              const ColoredBox(
-                                color: Color(0xFFECEDE7),
-                                child: Icon(Icons.person_outline),
-                              ),
-                        ),
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Bonjour ${session.displayName}',
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-                    Text(session.email),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          OutlinedButton.icon(
-            onPressed: () => context.push('/profil'),
-            icon: const Icon(Icons.manage_accounts_outlined),
-            label: const Text('Modifier mon profil'),
-          ),
-          const SizedBox(height: 10),
-          FilledButton.icon(
-            onPressed: () => context.push('/panier'),
-            icon: const Icon(Icons.shopping_bag_outlined),
-            label: const Text('Voir mon panier'),
-          ),
-          const SizedBox(height: 10),
-          OutlinedButton(
-            onPressed: () {
-              ref.read(authSessionProvider.notifier).signOut();
-              ref.invalidate(customerOrdersProvider);
-              context.go('/');
-            },
-            child: const Text('Se déconnecter'),
-          ),
-          const SizedBox(height: 28),
-          Text('Mes commandes', style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 8),
-          orders.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, stackTrace) => Text(
-              error is ApiException
-                  ? error.userMessage
-                  : 'Impossible de charger les commandes.',
-            ),
-            data: (items) => items.isEmpty
-                ? const Text('Aucune commande pour le moment.')
-                : Column(
-                    children: [
-                      for (final order in items)
-                        Card(
-                          child: ListTile(
-                            title: Text(_orderStatusLabel(order.status)),
-                            subtitle: Text(
-                              order.createdAt.toLocal().toString().substring(
-                                0,
-                                10,
-                              ),
-                            ),
-                            trailing: Text(
-                              '${order.total.toStringAsFixed(2).replaceAll('.', ',')} €',
-                            ),
+    final summary = Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                ClipOval(
+                  child: SizedBox.square(
+                    dimension: 52,
+                    child: session.avatarUrl.isEmpty
+                        ? const ColoredBox(
+                            color: Color(0xFFECEDE7),
+                            child: Icon(Icons.person_outline),
+                          )
+                        : Image.network(
+                            session.avatarUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                const ColoredBox(
+                                  color: Color(0xFFECEDE7),
+                                  child: Icon(Icons.person_outline),
+                                ),
                           ),
-                        ),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Bonjour ${session.displayName}',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
+                      Text(
+                        session.email,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ],
                   ),
-          ),
-        ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            OutlinedButton.icon(
+              onPressed: () => context.push('/profil'),
+              icon: const Icon(Icons.manage_accounts_outlined),
+              label: const Text('Modifier mon profil'),
+            ),
+            const SizedBox(height: 10),
+            FilledButton.icon(
+              onPressed: () => context.push('/panier'),
+              icon: const Icon(Icons.shopping_bag_outlined),
+              label: const Text('Voir mon panier'),
+            ),
+            const SizedBox(height: 10),
+            OutlinedButton(
+              onPressed: () {
+                ref.read(authSessionProvider.notifier).signOut();
+                ref.invalidate(customerOrdersProvider);
+                context.go('/');
+              },
+              child: const Text('Se déconnecter'),
+            ),
+          ],
+        ),
       ),
+    );
+    final orderHistory = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text('Mes commandes', style: Theme.of(context).textTheme.titleLarge),
+        const SizedBox(height: 8),
+        orders.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, stackTrace) => Text(
+            error is ApiException
+                ? error.userMessage
+                : 'Impossible de charger les commandes.',
+          ),
+          data: (items) => items.isEmpty
+              ? const Text('Aucune commande pour le moment.')
+              : Column(
+                  children: [
+                    for (final order in items)
+                      Card(
+                        child: ListTile(
+                          onTap: () => context.push(
+                            '/commandes/${order.documentId}/suivi',
+                          ),
+                          leading: const Icon(Icons.local_shipping_outlined),
+                          title: Text(
+                            _trackingStatusLabel(order.trackingStatus),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          subtitle: Text(
+                            '${_formatOrderDate(order.createdAt)} · '
+                            '${order.total.toStringAsFixed(2).replaceAll('.', ',')} €'
+                            '\n${_orderStatusLabel(order.status)}',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          trailing: const Icon(Icons.chevron_right),
+                        ),
+                      ),
+                  ],
+                ),
+        ),
+      ],
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth >= 740) {
+          return SingleChildScrollView(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(width: 300, child: summary),
+                const SizedBox(width: 24),
+                Expanded(child: orderHistory),
+              ],
+            ),
+          );
+        }
+        return SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [summary, const SizedBox(height: 24), orderHistory],
+          ),
+        );
+      },
     );
   }
 }
@@ -292,3 +337,19 @@ String _orderStatusLabel(String status) => switch (status) {
   'cancelled' => 'Annulée',
   _ => 'Commande',
 };
+
+String _trackingStatusLabel(String status) => switch (status) {
+  'awaiting_payment' => 'En attente de paiement',
+  'payment_confirmed' => 'Paiement confirmé',
+  'preparing' => 'En préparation',
+  'shipped' => 'Expédiée',
+  'delivered' => 'Livrée',
+  'cancelled' => 'Suivi annulé',
+  _ => 'Suivi indisponible',
+};
+
+String _formatOrderDate(DateTime date) {
+  final local = date.toLocal();
+  return '${local.day.toString().padLeft(2, '0')}/'
+      '${local.month.toString().padLeft(2, '0')}/${local.year}';
+}
