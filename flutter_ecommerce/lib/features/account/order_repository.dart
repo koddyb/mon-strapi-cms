@@ -28,6 +28,11 @@ final customerOrdersProvider = FutureProvider<List<CustomerOrder>>((ref) async {
       .toList(growable: false);
 });
 
+final orderTrackingProvider =
+    FutureProvider.family<CustomerOrder, String>((ref, documentId) {
+      return ref.watch(orderRepositoryProvider).getOrder(documentId);
+    });
+
 class OrderRepository {
   const OrderRepository(this._client);
 
@@ -82,29 +87,101 @@ class CustomerOrder {
     required this.status,
     required this.total,
     required this.createdAt,
+    required this.trackingStatus,
+    this.trackingCarrier,
+    this.trackingNumber,
+    this.trackingUpdatedAt,
+    this.paidAt,
+    this.shippedAt,
+    this.deliveredAt,
+    this.trackingEvents = const [],
   });
 
   final String documentId;
   final String status;
   final double total;
   final DateTime createdAt;
+  final String trackingStatus;
+  final String? trackingCarrier;
+  final String? trackingNumber;
+  final DateTime? trackingUpdatedAt;
+  final DateTime? paidAt;
+  final DateTime? shippedAt;
+  final DateTime? deliveredAt;
+  final List<OrderTrackingEvent> trackingEvents;
 
   factory CustomerOrder.fromJson(Map<String, Object?> json) {
     final documentId = json['documentId'];
     final status = json['status'];
     final total = json['total'];
     final createdAt = json['createdAt'];
+    final trackingStatus = json['trackingStatus'];
+    final trackingCarrier = json['trackingCarrier'];
+    final trackingNumber = json['trackingNumber'];
+    final trackingEvents = json['trackingEvents'];
     if (documentId is! String ||
         status is! String ||
         total is! num ||
-        createdAt is! String) {
+        createdAt is! String ||
+        (trackingStatus != null && trackingStatus is! String) ||
+        (trackingCarrier != null && trackingCarrier is! String) ||
+        (trackingNumber != null && trackingNumber is! String) ||
+        (trackingEvents != null && trackingEvents is! List<Object?>)) {
       throw const FormatException('Invalid Strapi order.');
     }
+    final eventData = trackingEvents is List<Object?>
+        ? trackingEvents
+        : const <Object?>[];
+    final events = eventData
+        .map((event) {
+          if (event is! Map<String, Object?>) {
+            throw const FormatException('Invalid Strapi tracking event.');
+          }
+          return OrderTrackingEvent.fromJson(event);
+        })
+        .toList(growable: false);
     return CustomerOrder(
       documentId: documentId,
       status: status,
       total: total.toDouble(),
       createdAt: DateTime.parse(createdAt),
+      trackingStatus: trackingStatus is String
+          ? trackingStatus
+          : status == 'paid'
+          ? 'payment_confirmed'
+          : 'awaiting_payment',
+      trackingCarrier: trackingCarrier is String ? trackingCarrier : null,
+      trackingNumber: trackingNumber is String ? trackingNumber : null,
+      trackingUpdatedAt: _optionalDate(json['trackingUpdatedAt']),
+      paidAt: _optionalDate(json['paidAt']),
+      shippedAt: _optionalDate(json['shippedAt']),
+      deliveredAt: _optionalDate(json['deliveredAt']),
+      trackingEvents: events,
     );
   }
+}
+
+class OrderTrackingEvent {
+  const OrderTrackingEvent({required this.status, required this.happenedAt});
+
+  final String status;
+  final DateTime happenedAt;
+
+  factory OrderTrackingEvent.fromJson(Map<String, Object?> json) {
+    final status = json['status'];
+    final happenedAt = json['happenedAt'];
+    if (status is! String || happenedAt is! String) {
+      throw const FormatException('Invalid Strapi tracking event.');
+    }
+    return OrderTrackingEvent(
+      status: status,
+      happenedAt: DateTime.parse(happenedAt),
+    );
+  }
+}
+
+DateTime? _optionalDate(Object? value) {
+  if (value == null) return null;
+  if (value is! String) throw const FormatException('Invalid Strapi date.');
+  return DateTime.parse(value);
 }
