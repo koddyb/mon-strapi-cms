@@ -134,28 +134,80 @@ async function sectionCommande() {
   const [p1, p2] = state.produits;
   const A = state.a.jwt;
   const B = state.b.jwt;
-  const expected = (Math.round(Number(p1.price) * 100) + Math.round(Number(p2.price) * 100)) / 100;
+  const subtotal =
+    (Math.round(Number(p1.price) * 100) + Math.round(Number(p2.price) * 100)) / 100;
+  const expected = subtotal + 4;
 
-  let r = await api('/api/mon-panier/commander', { method: 'POST', token: A });
+  let r = await api('/api/checkout/commandes', { method: 'POST', token: A });
   check(
-    'A : commander → 201, total = somme des prix publics',
-    r.status === 201 && r.json?.data?.total === expected && r.json.data.lineItems?.length === 2,
+    'A : checkout frontend → 201, total avec livraison et orderId',
+    r.status === 201 &&
+      r.json?.data?.total === expected &&
+      r.json.data.lineItems?.length === 2 &&
+      r.json.data.status === 'pending' &&
+      !!r.json.data.orderId,
     `status ${r.status} total ${r.json?.data?.total} attendu ${expected} ${JSON.stringify(r.json?.error ?? '')}`,
   );
-  r = await api('/api/mon-panier/commander', { method: 'POST', token: A });
+  state.a.orderId = r.json?.data?.orderId;
+
+  r = await api('/api/checkout/commandes', { method: 'POST', token: A });
   check(
-    'A : commander à nouveau → 400 panier vide',
+    'A : checkout répété → 400 panier vide',
     r.status === 400 && r.json?.error?.message === 'Le panier est vide.',
     `status ${r.status} ${JSON.stringify(r.json?.error ?? '')}`,
   );
   r = await api('/api/mon-panier', { token: A });
   check('A : mon-panier → 0 ligne', r.status === 200 && r.json?.data?.items?.length === 0, `status ${r.status}`);
-  r = await api('/api/mes-commandes', { token: A });
+  r = await api('/api/commandes/miennes', { token: A });
   check(
-    'A : mes-commandes → 1 commande, 2 lineItems',
-    r.status === 200 && r.json?.data?.length === 1 && r.json.data[0].lineItems?.length === 2 && !('user' in r.json.data[0]),
+    'A : commandes/miennes → 1 commande, 2 lineItems',
+    r.status === 200 &&
+      r.json?.data?.length === 1 &&
+      r.json.data[0].lineItems?.length === 2 &&
+      r.json.data[0].status === 'pending' &&
+      !('user' in r.json.data[0]),
     `status ${r.status} ${JSON.stringify(r.json?.error ?? '')}`,
   );
+
+  r = await api(`/api/mes-commandes/${state.a.orderId}`, { token: A });
+  check('A : détail de sa commande → 200', r.status === 200 && r.json?.data?.status === 'pending', `status ${r.status}`);
+  r = await api(`/api/mes-commandes/${state.a.orderId}`, { token: B });
+  check('B : détail de la commande de A → 404', r.status === 404, `status ${r.status}`);
+
+  r = await api(`/api/commandes/${state.a.orderId}/simulation`, { method: 'POST', token: A });
+  const readyAt = Date.parse(r.json?.data?.readyAt ?? '');
+  check(
+    'A : démarrer simulation → readyAt dans le futur',
+    r.status === 200 && Number.isFinite(readyAt) && readyAt > Date.now(),
+    `status ${r.status}`,
+  );
+  r = await api(`/api/commandes/${state.a.orderId}/confirmer-paiement`, { method: 'POST', token: A });
+  check('A : confirmation anticipée → 400', r.status === 400, `status ${r.status}`);
+  if (Number.isFinite(readyAt)) {
+    await new Promise((resolve) => setTimeout(resolve, Math.max(0, readyAt - Date.now() + 100)));
+  }
+  r = await api(`/api/commandes/${state.a.orderId}/confirmer-paiement`, { method: 'POST', token: A });
+  check('A : confirmation après simulation → paid', r.status === 200 && r.json?.data?.status === 'paid', `status ${r.status}`);
+  const address = {
+    fullName: 'Client Smoke',
+    line1: '1 rue du Test',
+    postalCode: '75001',
+    city: 'Paris',
+    country: 'France',
+  };
+  r = await api(`/api/commandes/${state.a.orderId}/adresse-livraison`, {
+    method: 'PUT',
+    token: A,
+    body: address,
+  });
+  check('A : enregistrer adresse après paiement → 200', r.status === 200, `status ${r.status}`);
+  r = await api(`/api/commandes/${state.a.orderId}/adresse-livraison`, {
+    method: 'PUT',
+    token: B,
+    body: address,
+  });
+  check('B : adresse sur commande de A → 404', r.status === 404, `status ${r.status}`);
+
   r = await api('/api/mes-commandes', { token: B });
   check('B : mes-commandes → 0 commande', r.status === 200 && r.json?.data?.length === 0, `status ${r.status}`);
 
@@ -163,12 +215,14 @@ async function sectionCommande() {
   check('B : ajoute P1 → 200', r.status === 200, `status ${r.status}`);
   r = await api('/api/mon-panier/commander', { method: 'POST', token: B, body: { total: 0.01 } });
   check(
-    'B : commander avec corps { total: 0.01 } → total = prix(P1)',
-    r.status === 201 && r.json?.data?.total === Number(p1.price),
+    'B : route de compatibilité → prix serveur + livraison',
+    r.status === 201 && r.json?.data?.total === Number(p1.price) + 4,
     `status ${r.status} total ${r.json?.data?.total}`,
   );
   r = await api('/api/mes-commandes');
   check('mes-commandes sans jeton → 401/403', r.status === 401 || r.status === 403, `status ${r.status}`);
+  r = await api('/api/commandes', { token: A });
+  check('CRUD générique des commandes désactivé → 404', r.status === 404, `status ${r.status}`);
 }
 
 async function sectionConcurrence() {

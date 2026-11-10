@@ -170,21 +170,37 @@ graph TD
 ## 📡 Guide de Consommation de l'API (Frontend / Client)
 
 ### Authentification
-- Si la route est ouverte en **Public** : aucun header requis.
-- Si la route est protégée par un **Token API** :
-  ```http
-  Authorization: Bearer <VOTRE_API_TOKEN>
-  ```
+- Le catalogue et les catégories sont publics.
+- Inscription et connexion utilisent le plugin Users & Permissions :
+  POST /api/auth/local/register et POST /api/auth/local.
+- Les routes panier et commande protégées attendent le JWT client avec le
+  schéma Bearer.
 
-### Endpoints Principaux
+### Routes utilisées par le frontend Flutter
 
-| Ressource | Méthode | URL |
+Toutes les routes panier et commande ci-dessous nécessitent un JWT client.
+
+| Ressource | Méthode | Route |
 |---|---|---|
-| **Tous les produits** | `GET` | `https://mon-strapi-cms-d348002bd1ec.herokuapp.com/api/produits` |
-| **Produits avec images & catégories** | `GET` | `https://mon-strapi-cms-d348002bd1ec.herokuapp.com/api/produits?populate=*` |
-| **Un produit par DocumentId** | `GET` | `https://mon-strapi-cms-d348002bd1ec.herokuapp.com/api/produits/:documentId?populate=*` |
-| **Toutes les catégories** | `GET` | `https://mon-strapi-cms-d348002bd1ec.herokuapp.com/api/categories?populate=*` |
-| **Filtrer par catégorie** | `GET` | `https://mon-strapi-cms-d348002bd1ec.herokuapp.com/api/produits?filters[category][slug][$eq]=audio-casques&populate=*` |
+| Catalogue public | `GET` | `/api/produits?populate[0]=image&populate[1]=images&populate[2]=category` |
+| Catégories publiques | `GET` | `/api/categories` |
+| Inscription / connexion | `POST` | `/api/auth/local/register`, `/api/auth/local` |
+| Panier client | `GET`, `POST`, `PUT`, `DELETE` | `/api/mon-panier`, `/api/mon-panier/lignes`, `/api/mon-panier/lignes/:lineDocumentId` |
+| Créer une commande | `POST` | `/api/checkout/commandes` |
+| Lister les commandes du client | `GET` | `/api/commandes/miennes` |
+| Lire une commande du client | `GET` | `/api/mes-commandes/:documentId` |
+| Démarrer la simulation de paiement | `POST` | `/api/commandes/:documentId/simulation` |
+| Confirmer le paiement simulé | `POST` | `/api/commandes/:documentId/confirmer-paiement` |
+| Enregistrer l’adresse de livraison | `PUT` | `/api/commandes/:documentId/adresse-livraison` |
+
+Le checkout ignore les prix envoyés par le navigateur : il relit les prix des
+produits côté serveur et ajoute 4 EUR de livraison. La simulation dure 10
+secondes et ne déclenche aucun paiement réel. Les commandes sont isolées par
+client ; les routes CRUD génériques des commandes ne sont pas exposées.
+
+Le démarrage de Strapi synchronise les permissions des rôles `Public` et
+`Authenticated` pour ces routes. Le README Flutter décrit le lancement et les
+écrans de la boutique.
 
 ### 📌 Spécificités Strapi v5 à retenir
 1. **Pas de wrapper `attributes`** : Les propriétés sont directement accessibles à la racine de chaque objet (ex: `produit.title`, `produit.slug`).
