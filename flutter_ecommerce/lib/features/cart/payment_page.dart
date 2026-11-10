@@ -125,16 +125,25 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
           icon: const Icon(Icons.arrow_back),
         ),
       ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 560),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: _loadingOrder
-                ? const Center(child: CircularProgressIndicator())
-                : _error != null && _order == null
-                ? _buildError(context)
-                : _buildPayment(context),
+      body: LayoutBuilder(
+        builder: (context, constraints) => SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 560),
+                child: Padding(
+                  padding: EdgeInsets.all(
+                    MediaQuery.sizeOf(context).width < 400 ? 12 : 24,
+                  ),
+                  child: _loadingOrder
+                      ? const Center(child: CircularProgressIndicator())
+                      : _error != null && _order == null
+                      ? _buildError(context)
+                      : _buildPayment(context),
+                ),
+              ),
+            ),
           ),
         ),
       ),
@@ -162,7 +171,9 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
     final simulating = _readyAt != null;
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(28),
+        padding: EdgeInsets.all(
+          MediaQuery.sizeOf(context).width < 400 ? 16 : 28,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -213,7 +224,14 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
             Row(
               children: [
                 const Expanded(child: Text('Commande')),
-                Text('#${order.documentId}'),
+                Flexible(
+                  child: Text(
+                    '#${order.documentId}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.end,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 12),
