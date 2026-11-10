@@ -169,13 +169,49 @@ class _AccountPageState extends ConsumerState<AccountPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            'Bonjour ${session.username}',
-            style: Theme.of(context).textTheme.headlineSmall,
+          Row(
+            children: [
+              ClipOval(
+                child: SizedBox.square(
+                  dimension: 52,
+                  child: session.avatarUrl.isEmpty
+                      ? const ColoredBox(
+                          color: Color(0xFFECEDE7),
+                          child: Icon(Icons.person_outline),
+                        )
+                      : Image.network(
+                          session.avatarUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              const ColoredBox(
+                                color: Color(0xFFECEDE7),
+                                child: Icon(Icons.person_outline),
+                              ),
+                        ),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Bonjour ${session.displayName}',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                    Text(session.email),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
-          Text(session.email),
           const SizedBox(height: 24),
+          OutlinedButton.icon(
+            onPressed: () => context.push('/profil'),
+            icon: const Icon(Icons.manage_accounts_outlined),
+            label: const Text('Modifier mon profil'),
+          ),
+          const SizedBox(height: 10),
           FilledButton.icon(
             onPressed: () => context.push('/panier'),
             icon: const Icon(Icons.shopping_bag_outlined),

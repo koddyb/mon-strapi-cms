@@ -45,13 +45,30 @@ class AuthRepository {
         message: 'Strapi did not return a customer session.',
       );
     }
+    final id = user['id'];
     final email = user['email'];
     final username = user['username'];
-    if (email is! String || username is! String) {
+    final firstName = user['firstName'];
+    final lastName = user['lastName'];
+    final avatarUrl = user['avatarUrl'];
+    if (id is! num ||
+        email is! String ||
+        username is! String ||
+        (firstName != null && firstName is! String) ||
+        (lastName != null && lastName is! String) ||
+        (avatarUrl != null && avatarUrl is! String)) {
       throw const ApiException(
         message: 'Strapi returned an invalid customer profile.',
       );
     }
-    return AuthSession(jwt: jwt, email: email, username: username);
+    return AuthSession(
+      jwt: jwt,
+      userId: id.toInt().toString(),
+      email: email,
+      username: username,
+      firstName: firstName as String? ?? '',
+      lastName: lastName as String? ?? '',
+      avatarUrl: avatarUrl as String? ?? '',
+    );
   }
 }
