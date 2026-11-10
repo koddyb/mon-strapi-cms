@@ -71,57 +71,83 @@ class _CartContents extends ConsumerWidget {
           children: [
             for (final item in cart.items)
               Card(
-                child: ListTile(
-                  title: Text(item.product.title),
-                  subtitle: Text(
-                    item.product.price == null
-                        ? 'Tarif à renseigner'
-                        : '${_formatEuro(item.product.price!)} € par article',
-                  ),
-                  leading: SizedBox(
-                    width: 64,
-                    child: item.product.imageUrl == null
-                        ? const Icon(Icons.image_outlined)
-                        : Image.network(
-                            item.product.imageUrl!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                const Icon(Icons.broken_image_outlined),
-                          ),
-                  ),
-                  trailing: Wrap(
-                    crossAxisAlignment: WrapCrossAlignment.center,
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
                     children: [
-                      IconButton(
-                        tooltip: 'Diminuer la quantité',
-                        onPressed: item.quantity > 1
-                            ? () => _updateQuantity(
-                                context,
-                                ref,
-                                item,
-                                item.quantity - 1,
-                              )
-                            : null,
-                        icon: const Icon(Icons.remove),
+                      Row(
+                        children: [
+                          SizedBox(
+                            width: 64,
+                            height: 64,
+                            child: item.product.imageUrl == null
+                                ? const Icon(Icons.image_outlined)
+                                : Image.network(
+                                    item.product.imageUrl!,
+                                    fit: BoxFit.cover,
+                                    errorBuilder:
+                                        (context, error, stackTrace) =>
+                                            const Icon(
+                                              Icons.broken_image_outlined,
+                                            ),
+                                  ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  item.product.title,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context).textTheme.titleMedium,
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  item.product.price == null
+                                      ? 'Tarif à renseigner'
+                                      : '${_formatEuro(item.product.price!)} € par article',
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            tooltip: 'Retirer du panier',
+                            onPressed: () =>
+                                _removeLine(context, ref, item.documentId),
+                            icon: const Icon(Icons.delete_outline),
+                          ),
                       ),
-                      Text('${item.quantity}'),
-                      IconButton(
-                        tooltip: 'Augmenter la quantité',
-                        onPressed: item.quantity < 99
-                            ? () => _updateQuantity(
-                                context,
-                                ref,
-                                item,
-                                item.quantity + 1,
-                              )
-                            : null,
-                        icon: const Icon(Icons.add),
-                      ),
-                      IconButton(
-                        tooltip: 'Retirer du panier',
-                        onPressed: () =>
-                            _removeLine(context, ref, item.documentId),
-                        icon: const Icon(Icons.delete_outline),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          IconButton(
+                            tooltip: 'Diminuer la quantité',
+                            onPressed: item.quantity > 1
+                                ? () => _updateQuantity(
+                                    context,
+                                    ref,
+                                    item,
+                                    item.quantity - 1,
+                                  )
+                                : null,
+                            icon: const Icon(Icons.remove),
+                          ),
+                          Text('${item.quantity}'),
+                          IconButton(
+                            tooltip: 'Augmenter la quantité',
+                            onPressed: item.quantity < 99
+                                ? () => _updateQuantity(
+                                    context,
+                                    ref,
+                                    item,
+                                    item.quantity + 1,
+                                  )
+                                : null,
+                            icon: const Icon(Icons.add),
+                          ),
+                        ],
                       ),
                     ],
                   ),
