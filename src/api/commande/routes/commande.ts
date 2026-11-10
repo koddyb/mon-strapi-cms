@@ -1,3 +1,1 @@
-import { factories } from '@strapi/strapi';
-
-export default factories.createCoreRouter('api::commande.commande');
+export default { routes: [] };
