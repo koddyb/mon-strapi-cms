@@ -189,6 +189,8 @@ Toutes les routes panier et commande ci-dessous nécessitent un JWT client.
 | Créer une commande | `POST` | `/api/checkout/commandes` |
 | Lister les commandes du client | `GET` | `/api/commandes/miennes` |
 | Lire une commande du client | `GET` | `/api/mes-commandes/:documentId` |
+| Lire son profil | `GET` | `/api/users/me` |
+| Modifier son profil | `PUT` | `/api/client/profil` |
 | Démarrer la simulation de paiement | `POST` | `/api/commandes/:documentId/simulation` |
 | Confirmer le paiement simulé | `POST` | `/api/commandes/:documentId/confirmer-paiement` |
 | Enregistrer l’adresse de livraison | `PUT` | `/api/commandes/:documentId/adresse-livraison` |
@@ -196,7 +198,14 @@ Toutes les routes panier et commande ci-dessous nécessitent un JWT client.
 Le checkout ignore les prix envoyés par le navigateur : il relit les prix des
 produits côté serveur et ajoute 4 EUR de livraison. La simulation dure 10
 secondes et ne déclenche aucun paiement réel. Les commandes sont isolées par
-client ; les routes CRUD génériques des commandes ne sont pas exposées.
+client ; les routes CRUD génériques des commandes ne sont pas exposées. Le suivi
+enregistre automatiquement la création et la confirmation du paiement. Les
+étapes d'expédition et de livraison doivent être mises à jour par l'équipe
+boutique dans l'administration Strapi.
+
+La modification du profil est limitée à l'utilisateur authentifié : l'API
+ignore tout identifiant utilisateur fourni par le client et n'expose que les
+champs de profil autorisés.
 
 Le démarrage de Strapi synchronise les permissions des rôles `Public` et
 `Authenticated` pour ces routes. Le README Flutter décrit le lancement et les

@@ -48,5 +48,11 @@ export default {
       handler: 'api::commande.commande.saveShippingAddress',
       config: { auth: {} },
     },
+    {
+      method: 'PUT',
+      path: '/client/profil',
+      handler: 'api::commande.commande.updateProfile',
+      config: { auth: {} },
+    },
   ],
 };

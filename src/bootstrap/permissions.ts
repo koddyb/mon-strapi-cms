@@ -31,6 +31,7 @@ export const WANTED_PERMISSIONS: Record<'public' | 'authenticated', string[]> = 
     'api::commande.commande.startSimulation',
     'api::commande.commande.confirmSimulation',
     'api::commande.commande.saveShippingAddress',
+    'api::commande.commande.updateProfile',
   ],
 };
 

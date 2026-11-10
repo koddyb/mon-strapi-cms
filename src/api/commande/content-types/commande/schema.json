@@ -61,6 +61,41 @@
       "type": "datetime",
       "private": true
     },
+    "trackingStatus": {
+      "type": "enumeration",
+      "enum": [
+        "awaiting_payment",
+        "payment_confirmed",
+        "preparing",
+        "shipped",
+        "delivered",
+        "cancelled"
+      ],
+      "default": "awaiting_payment",
+      "required": true
+    },
+    "trackingCarrier": {
+      "type": "string"
+    },
+    "trackingNumber": {
+      "type": "string"
+    },
+    "trackingUpdatedAt": {
+      "type": "datetime"
+    },
+    "paidAt": {
+      "type": "datetime"
+    },
+    "shippedAt": {
+      "type": "datetime"
+    },
+    "deliveredAt": {
+      "type": "datetime"
+    },
+    "trackingEvents": {
+      "type": "json",
+      "default": []
+    },
     "user": {
       "type": "relation",
       "relation": "manyToOne",

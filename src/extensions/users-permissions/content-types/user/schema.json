@@ -59,6 +59,22 @@
       "default": false,
       "configurable": false
     },
+    "firstName": {
+      "type": "string",
+      "maxLength": 80
+    },
+    "lastName": {
+      "type": "string",
+      "maxLength": 80
+    },
+    "phoneNumber": {
+      "type": "string",
+      "maxLength": 40
+    },
+    "avatarUrl": {
+      "type": "string",
+      "maxLength": 2048
+    },
     "role": {
       "type": "relation",
       "relation": "manyToOne",
