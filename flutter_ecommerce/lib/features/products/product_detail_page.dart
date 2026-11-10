@@ -82,7 +82,7 @@ class ProductDetailPage extends ConsumerWidget {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 1040),
             child: Padding(
-              padding: const EdgeInsets.all(28),
+              padding: const EdgeInsets.all(20),
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final compact = constraints.maxWidth < 700;
@@ -118,7 +118,7 @@ class ProductDetailPage extends ConsumerWidget {
                           ),
                   );
                   final details = Padding(
-                    padding: const EdgeInsets.all(28),
+                    padding: EdgeInsets.all(compact ? 16 : 28),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
