@@ -17,7 +17,7 @@ class ProfilePage extends ConsumerWidget {
         body: Center(
           child: FilledButton(
             onPressed: () => context.go('/compte'),
-            child: const Text('Connectez-vous pour acc?der ? votre profil'),
+            child: const Text('Connectez-vous pour accéder à votre profil'),
           ),
         ),
       );
@@ -37,7 +37,9 @@ class ProfilePage extends ConsumerWidget {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 620),
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: EdgeInsets.all(
+              MediaQuery.sizeOf(context).width < 400 ? 16 : 20,
+            ),
             child: profile.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, stackTrace) => _ProfileError(
@@ -68,7 +70,7 @@ class _ProfileError extends StatelessWidget {
       children: [
         Text(message, textAlign: TextAlign.center),
         const SizedBox(height: 12),
-        OutlinedButton(onPressed: onRetry, child: const Text('R?essayer')),
+        OutlinedButton(onPressed: onRetry, child: const Text('Réessayer')),
       ],
     );
   }
@@ -130,7 +132,7 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
       ref.invalidate(customerProfileProvider);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profil mis ? jour.')),
+          const SnackBar(content: Text('Profil mis à jour.')),
         );
       }
     } on ApiException catch (error) {
@@ -146,8 +148,9 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
     final uri = Uri.tryParse(url);
     if (uri == null ||
         !uri.hasAuthority ||
+        uri.host.isEmpty ||
         (uri.scheme != 'https' && uri.scheme != 'http')) {
-      return 'Saisissez une URL d?image HTTP ou HTTPS valide.';
+      return 'Saisissez une URL d’image HTTP ou HTTPS valide.';
     }
     return null;
   }
@@ -190,7 +193,7 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
             controller: _firstNameController,
             textInputAction: TextInputAction.next,
             maxLength: 80,
-            decoration: const InputDecoration(labelText: 'Pr?nom'),
+            decoration: const InputDecoration(labelText: 'Prénom'),
           ),
           const SizedBox(height: 12),
           TextFormField(
@@ -211,7 +214,7 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
             keyboardType: TextInputType.phone,
             textInputAction: TextInputAction.next,
             maxLength: 32,
-            decoration: const InputDecoration(labelText: 'T?l?phone'),
+            decoration: const InputDecoration(labelText: 'Téléphone'),
           ),
           const SizedBox(height: 12),
           TextFormField(
@@ -222,7 +225,8 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
             validator: _validateAvatarUrl,
             decoration: const InputDecoration(
               labelText: 'Lien de la photo de profil',
-              helperText: 'Ajoutez une URL publique HTTPS. Aper?u apr?s sauvegarde.',
+              helperText:
+                  'URL publique HTTP ou HTTPS. Aperçu après sauvegarde.',
             ),
           ),
           if (_error != null) ...[
