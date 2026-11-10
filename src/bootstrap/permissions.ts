@@ -27,16 +27,19 @@ export const WANTED_PERMISSIONS: Record<'public' | 'authenticated', string[]> = 
     'api::panier.panier.removeLine',
     'api::commande.commande.checkout',
     'api::commande.commande.mine',
+    'api::commande.commande.findOneMine',
+    'api::commande.commande.startSimulation',
+    'api::commande.commande.confirmSimulation',
+    'api::commande.commande.saveShippingAddress',
   ],
 };
 
 /**
- * Ajoute les permissions manquantes aux rôles Public et Authenticated.
- * N'en retire aucune : idempotent, relançable à chaque démarrage.
+ * Synchronise les permissions boutique des rôles Public et Authenticated.
  */
 export async function ensurePermissions(strapi: Core.Strapi): Promise<void> {
   const added: string[] = [];
-  const extra: string[] = [];
+  const removed: string[] = [];
 
   for (const [type, actions] of Object.entries(WANTED_PERMISSIONS)) {
     const [role] = await strapi.documents(ROLE_UID).findMany({
@@ -48,12 +51,20 @@ export async function ensurePermissions(strapi: Core.Strapi): Promise<void> {
       strapi.log.warn(`[permissions] rôle "${type}" introuvable, permissions ignorées.`);
       continue;
     }
-    const existing = new Set(
-      ((role as any).permissions ?? []).map((p: { action: string }) => p.action),
-    );
-    for (const a of existing as Set<string>) {
-      if (/^api::(panier|ligne-panier|commande)\./.test(a) && !actions.includes(a)) {
-        extra.push(`${type}:${a}`);
+    const permissions = ((role as any).permissions ?? []) as {
+      documentId: string;
+      action: string;
+    }[];
+    const existing = new Set(permissions.map((permission) => permission.action));
+    for (const permission of permissions) {
+      if (
+        /^api::(panier|ligne-panier|commande)\./.test(permission.action) &&
+        !actions.includes(permission.action)
+      ) {
+        await strapi.documents(PERMISSION_UID).delete({
+          documentId: permission.documentId,
+        });
+        removed.push(`${type}:${permission.action}`);
       }
     }
     for (const action of actions) {
@@ -65,9 +76,9 @@ export async function ensurePermissions(strapi: Core.Strapi): Promise<void> {
     }
   }
 
-  if (extra.length > 0) {
+  if (removed.length > 0) {
     strapi.log.warn(
-      `[permissions] actions panier/commande hors liste voulue (CRUD générique ouvert dans l'admin ?) : ${extra.join(', ')}`,
+      `[permissions] ${removed.length} permission(s) panier/commande non autorisée(s) supprimée(s) : ${removed.join(', ')}`,
     );
   }
 

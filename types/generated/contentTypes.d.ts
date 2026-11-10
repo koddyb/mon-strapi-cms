@@ -490,6 +490,10 @@ export interface ApiCommandeCommande extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    currency: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'eur'>;
+    customerEmail: Schema.Attribute.Email & Schema.Attribute.Private;
     lineItems: Schema.Attribute.JSON & Schema.Attribute.Required;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
@@ -497,7 +501,33 @@ export interface ApiCommandeCommande extends Struct.CollectionTypeSchema {
       'api::commande.commande'
     > &
       Schema.Attribute.Private;
+    paymentSimulationStartedAt: Schema.Attribute.DateTime &
+      Schema.Attribute.Private;
     publishedAt: Schema.Attribute.DateTime;
+    shippingAddress: Schema.Attribute.JSON & Schema.Attribute.Private;
+    shippingAmount: Schema.Attribute.Decimal &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      > &
+      Schema.Attribute.DefaultTo<0>;
+    status: Schema.Attribute.Enumeration<
+      ['pending', 'paid', 'failed', 'cancelled']
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'pending'>;
+    subtotal: Schema.Attribute.Decimal &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      > &
+      Schema.Attribute.DefaultTo<0>;
     total: Schema.Attribute.Decimal &
       Schema.Attribute.Required &
       Schema.Attribute.SetMinMax<

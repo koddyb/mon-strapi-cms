@@ -12,6 +12,34 @@
   },
   "pluginOptions": {},
   "attributes": {
+    "status": {
+      "type": "enumeration",
+      "enum": [
+        "pending",
+        "paid",
+        "failed",
+        "cancelled"
+      ],
+      "default": "pending",
+      "required": true
+    },
+    "currency": {
+      "type": "string",
+      "default": "eur",
+      "required": true
+    },
+    "subtotal": {
+      "type": "decimal",
+      "min": 0,
+      "default": 0,
+      "required": true
+    },
+    "shippingAmount": {
+      "type": "decimal",
+      "min": 0,
+      "default": 0,
+      "required": true
+    },
     "total": {
       "type": "decimal",
       "required": true,
@@ -20,6 +48,18 @@
     "lineItems": {
       "type": "json",
       "required": true
+    },
+    "customerEmail": {
+      "type": "email",
+      "private": true
+    },
+    "shippingAddress": {
+      "type": "json",
+      "private": true
+    },
+    "paymentSimulationStartedAt": {
+      "type": "datetime",
+      "private": true
     },
     "user": {
       "type": "relation",
